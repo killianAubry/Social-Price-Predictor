@@ -1,5 +1,5 @@
-📈 Social Price Predictor
-Welcome to Social Price Predictor! This innovative AI-powered stock trading algorithm leverages social media sentiment to forecast stock prices, aiming to help you make informed investment decisions.
+📈 **Social Price Predictor**
+This innovative AI-powered stock trading algorithm leverages social media sentiment to forecast stock prices, aiming to help you make informed investment decisions.
 
 🚀 Overview
 In the rapidly evolving world of finance, traditional analysis methods can sometimes fall short. Social Price Predictor utilizes advanced natural language processing and machine learning techniques to analyze social media trends, discussions, and sentiment around various stocks. By combining social insights with market data, this tool provides a unique approach to stock price prediction.
