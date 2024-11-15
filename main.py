@@ -9,7 +9,7 @@ reddit = praw.Reddit(
     user_agent="MyRedditApp/1.0 by timmothy"
 )
 
-investopedia_client = ita.Account("*******", "*****")
+investopedia_client = ita.Account("******", "*****")
 
 # Function to scrape popular comments from 5 random Reddit posts
 def scrape_reddit_comments(subreddit="apple", num_posts=5):
