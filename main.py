@@ -9,10 +9,10 @@ reddit = praw.Reddit(
     user_agent="MyRedditApp/1.0 by timmothy"
 )
 
-investopedia_client = ita.Account("*******", "*****")
+investopedia_client = ita.Account("******", "*****")
 
-# Function to scrape popular comments from 5 random Reddit posts
-def scrape_reddit_comments(subreddit="apple", num_posts=5):
+# Function to scrape popular comments from 5 random Reddit posts in a given subreddit
+def scrape_reddit_comments(subreddit, num_posts=5):
     comments = []
     subreddit = reddit.subreddit(subreddit)
 
@@ -21,7 +21,7 @@ def scrape_reddit_comments(subreddit="apple", num_posts=5):
         query="",
         sort="hot",
         time_filter="week",
-        limit=10  # Get up to 50 posts
+        limit=10  # Get up to 10 posts
     ))
     random_posts = random.sample(posts, min(num_posts, len(posts)))  # Select random posts
 
@@ -54,18 +54,22 @@ def execute_trade(sentiments, stock_symbol="AAPL", quantity=10):
 
 # Main function to coordinate the process
 def main():
-    # Step 1: Scrape Reddit
-    print("Scraping Reddit for comments...")
-    comments = scrape_reddit_comments()
-    print(f"Collected {len(comments)} comments.")
+    subreddits = ["Hoka", "teslamotors", "apple"]
+    stock_symbols = ["HOKA", "TSLA", "AAPL"]
 
-    # Step 2: Perform sentiment analysis
-    print("Analyzing sentiment...")
-    sentiments = analyze_sentiment(comments)
+    for subreddit, stock_symbol in zip(subreddits, stock_symbols):
+        # Step 1: Scrape Reddit
+        print(f"Scraping Reddit for comments from r/{subreddit}...")
+        comments = scrape_reddit_comments(subreddit)
+        print(f"Collected {len(comments)} comments from r/{subreddit}.")
 
-    # Step 3: Execute trade based on sentiment
-    print("Executing trade based on sentiment...")
-    execute_trade(sentiments, stock_symbol="AAPL", quantity=10)
+        # Step 2: Perform sentiment analysis
+        print(f"Analyzing sentiment for r/{subreddit}...")
+        sentiments = analyze_sentiment(comments)
+
+        # Step 3: Execute trade based on sentiment
+        print(f"Executing trade based on sentiment for {stock_symbol}...")
+        execute_trade(sentiments, stock_symbol=stock_symbol, quantity=10)
 
 if __name__ == "__main__":
     main()
