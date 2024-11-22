@@ -16,6 +16,7 @@ def scrape_reddit_comments(subreddit, num_posts=5):
     comments = []
     subreddit = reddit.subreddit(subreddit)
 
+
     # Search for posts from the past week
     posts = list(subreddit.search(
         query="",
