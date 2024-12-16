@@ -2,11 +2,13 @@ import praw
 import random
 from textblob import TextBlob
 from InvestopediaApi import ita
+import requests
+from bs4 import BeautifulSoup
 
 reddit = praw.Reddit(
-    client_id="zuleDiNXp9WmpcdbCHiQpw",
-    client_secret="Sjqmys-vQ87jzvBefuykI8mLqO2t7A",
-    user_agent="MyRedditApp/1.0 by timmothy"
+    client_id="####",
+    client_secret="#####",
+    user_agent="#####"
 )
 
 investopedia_client = ita.Account("******", "*****")
@@ -53,11 +55,38 @@ def execute_trade(sentiments, stock_symbol="AAPL", quantity=10):
     else:
         print(f"Neutral sentiment detected ({avg_sentiment}). No action taken.")
 
+def get_stock_price(stock_symbol):
+    url = f"https://finance.yahoo.com/quote/{stock_symbol}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        # Find the stock price element
+        price_tag = soup.find('fin-streamer', {"data-field": "regularMarketPrice"})
+        if price_tag:
+            return price_tag.text
+        else:
+            return "Price not found"
+    else:
+        return f"Failed to fetch data. Status code: {response.status_code}"
+
 # Main function to coordinate the process
 def main():
     subreddits = ["Hoka", "teslamotors", "apple"]
     stock_symbols = ["HOKA", "TSLA", "AAPL"]
+    stock_symbols = {
+        "Hoka": "DECK",  # Hoka is a brand owned by Deckers Outdoor Corporation
+        "Tesla": "TSLA",
+        "Apple": "AAPL"
+    }
 
+    for company, symbol in stock_symbols.items():
+        print(f"Fetching stock price for {company} ({symbol})...")
+        price = get_stock_price(symbol)
+        print(f"{company} stock price: {price}\n")
     for subreddit, stock_symbol in zip(subreddits, stock_symbols):
         # Step 1: Scrape Reddit
         print(f"Scraping Reddit for comments from r/{subreddit}...")
