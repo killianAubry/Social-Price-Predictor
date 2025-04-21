@@ -1,0 +1,10 @@
+flask==2.3.2
+flask-cors==3.0.10
+beautifulsoup4==4.12.2
+requests==2.31.0
+textblob==0.17.1
+numpy==1.24.3
+cachetools==5.3.1
+selenium==4.10.0
+webdriver-manager==3.8.6  # Auto-handles ChromeDriver
+pytz==2023.3  # Timezone support for datetime
