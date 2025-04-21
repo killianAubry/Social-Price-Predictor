@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from bs4 import BeautifulSoup
 import requests
@@ -18,6 +18,10 @@ import time
 
 app = Flask(__name__)
 CORS(app)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
 
 cache = TTLCache(maxsize=100, ttl=3600)
 logger = logging.getLogger(__name__)
@@ -193,3 +197,4 @@ def handle_search():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
+
