@@ -113,42 +113,43 @@ def calculate_predictions(ticker, current_price):
         url = f"https://finance.yahoo.com/quote/{ticker}"
         driver.get(url)
         
-        # Wait for news section to load
-        try:
-            WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "section[data-testid='recent-news'] h3"))
-            )
-        except:
-            print("Timed out waiting for news to load")
-            return None
-        
-        # Wait an additional second for stability
-        time.sleep(1)
+        # Wait for page to load
+        time.sleep(2)  # Increased wait time for stability
         
         # Get the page source and parse with BeautifulSoup
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         
-        # Find the news section and headlines
-        recent_news = soup.find('section', {'data-testid': 'recent-news'})
-        if not recent_news:
-            print("Could not find recent news section")
+        # Find the "Recent news" section by data-testid
+        recent_news_section = soup.find('section', {'data-testid': 'recent-news'})
+        
+        if not recent_news_section:
+            print("Could not find Recent news section")
             return None
             
-        headlines = recent_news.find_all('h3', class_='clamp yf-82qtw3')
+        # Find all headlines - they appear to be in h3 tags with class starting with 'yf-'
+        headlines = recent_news_section.find_all('h3', class_=lambda x: x and x.startswith('yf-'))
+        
+        # Also look for headlines in h3 tags with class 'clamp' (which appears in your example)
+        clamp_headlines = recent_news_section.find_all('h3', class_='clamp')
+        headlines.extend(clamp_headlines)
+        
         if not headlines:
-            print("No headlines found with specified class")
+            print("No headlines found in Recent news section")
             return None
             
         # Process headlines and calculate sentiment
         sentiments = []
+        headline_texts = []
         for headline in headlines:
             text = headline.get_text().strip()
-            try:
-                sentiment = TextBlob(text).sentiment.polarity
-                sentiments.append(sentiment)
-            except Exception as e:
-                print(f"Error analyzing sentiment: {e}")
-                continue
+            if text and text != "Recent News: JEPQ":  # Skip the section title
+                try:
+                    sentiment = TextBlob(text).sentiment.polarity
+                    sentiments.append(sentiment)
+                    headline_texts.append(text)
+                except Exception as e:
+                    print(f"Error analyzing sentiment for '{text}': {e}")
+                    continue
         
         if not sentiments:
             return None
@@ -161,12 +162,16 @@ def calculate_predictions(ticker, current_price):
         return [{
             'type': 'Headline Sentiment Analysis',
             'price': round(predicted_price, 2),
-            'confidence': 'low' if abs(normalized) > .4 else 'medium' if abs(normalized) > .2 else 'high' ,
+            'confidence': 'low' if abs(normalized) > .4 else 'medium' if abs(normalized) > .2 else 'high',
             'num_headlines': len(headlines),
             'avg_sentiment': average,
-            'sentiment': normalized
+            'sentiment': normalized,
+            'headlines': headline_texts  # Include actual headlines for debugging
         }]
         
+    except Exception as e:
+        print(f"Error in calculate_predictions: {str(e)}")
+        return None
     finally:
         driver.quit()
 
