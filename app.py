@@ -99,18 +99,33 @@ def get_yfinance_data(ticker):
 
 
 def calculate_predictions(ticker, current_price):
+    def calculate_predictions(ticker, current_price):
     chrome_options = Options()
-    chrome_options.add_argument("--headless=new")  # modern headless
-    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--disable-software-rasterizer")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--remote-debugging-port=9222")
     
-    # Initialize the driver
-    driver = webdriver.Chrome(options=chrome_options)
+    # Critical fixes for Docker environment
+    chrome_options.add_argument("--disable-setuid-sandbox")
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--disable-infobars")
+    chrome_options.add_argument("--disable-browser-side-navigation")
+    chrome_options.add_argument("--disable-features=VizDisplayCompositor")
+    
+    # User agent and window size
+    chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.add_argument("user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
+    
+    # Handle temp directories
+    import tempfile
+    import shutil
+    user_data_dir = tempfile.mkdtemp()
+    chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
     
     try:
+        driver = webdriver.Chrome(options=chrome_options)
         # Load the page with explicit wait
         url = f"https://finance.yahoo.com/quote/{ticker}"
         driver.get(url)
@@ -174,10 +189,15 @@ def calculate_predictions(ticker, current_price):
         }]
         
     except Exception as e:
-        print(f"Error in calculate_predictions: {str(e)}")
+        logger.error(f"ChromeDriver error: {str(e)}")
         return None
     finally:
-        driver.quit()
+        try:
+            if 'driver' in locals():
+                driver.quit()
+        except Exception as e:
+            logger.error(f"Error quitting driver: {str(e)}")
+        shutil.rmtree(user_data_dir, ignore_errors=True)
 
 @app.route('/search', methods=['POST'])
 def handle_search():
