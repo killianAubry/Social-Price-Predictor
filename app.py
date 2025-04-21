@@ -17,7 +17,8 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True, origins=["https://sentidex.onrender.com"])
+
 
 @app.route('/')
 def home():
@@ -163,7 +164,7 @@ def calculate_predictions(ticker, current_price):
     finally:
         driver.quit()
 
-@app.route('/search', methods=['POST'])
+@app.route('/search', methods=['POST', 'OPTIONS'])
 def handle_search():
     data = request.get_json()
     ticker = data.get('ticker', '').upper().strip()
