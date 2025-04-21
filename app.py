@@ -104,7 +104,7 @@ def calculate_predictions(ticker, current_price):
     chrome_options.add_argument("--headless")  # Run in background
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
-    
+    chrome_options.binary_location = "/usr/bin/chromium"
     # Initialize the driver
     driver = webdriver.Chrome(options=chrome_options)
     
