@@ -177,6 +177,14 @@ def calculate_predictions(ticker, current_price):
 
 @app.route('/search', methods=['POST', 'OPTIONS'])
 def handle_search():
+    if request.method == 'OPTIONS':
+        # Preflight response
+        response = app.make_response('')
+        response.headers.add('Access-Control-Allow-Origin', 'https://sentidex.onrender.com')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
+        return response
+
     data = request.get_json()
     ticker = data.get('ticker', '').upper().strip()
 
@@ -193,7 +201,7 @@ def handle_search():
             'ticker': ticker,
             'suggestion': 'Please try again later'
         }), 400
-    
+
     stock_data['price_data']['dates'] = stock_data['price_data']['dates'][::-1]
     stock_data['price_data']['prices'] = stock_data['price_data']['prices'][::-1]
 
