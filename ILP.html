@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Predictor with Alpha Vantage</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #121C84 0%, #8278da 100%);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            color: white;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .search-container {
+            width: 90%;
+            max-width: 800px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 15px 0px;
+            font-size: 18px;
+            border: none;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            outline: none;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .search-button {
+            margin-top: 20px;
+            padding: 12px 30px;
+            font-size: 16px;
+            background: white;
+            color: #764ba2;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            font-weight: bold;
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .price-table th, .price-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .price-table th {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .prediction-row {
+            background: rgba(75, 192, 192, 0.1);
+            font-weight: bold;
+        }
+
+        .prediction-row td:last-child {
+            color: #4bc0c0;
+        }
+
+        .prediction-card {
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(75, 192, 192, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #4bc0c0;
+        }
+
+        .prediction-methods {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .prediction-method {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .confidence-high { color: #4CAF50; }
+        .confidence-medium { color: #FFC107; }
+        .confidence-low { color: #F44336; }
+
+        .disclaimer {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 600px) {
+            .search-container {
+                padding: 20px;
+                width: 85%;
+            }
+            
+            .price-table th, 
+            .price-table td {
+                padding: 8px 10px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <h1>Stock Price Predictor</h1>
+        <input type="text" id="tickerInput" class="search-box" placeholder="Enter stock symbol (e.g., AAPL, TSLA)" autocomplete="on">
+        <button onclick="searchTicker()" class="search-button">Get Predictions</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function searchTicker() {
+            const ticker = document.getElementById('tickerInput').value.trim().toUpperCase();
+            const resultDiv = document.getElementById('result');
+            const button = document.querySelector('.search-button');
+            
+            if (!ticker) {
+                showResult('Please enter a stock symbol', 'error');
+                return;
+            }
+
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = '<span class="loading"></span> Analyzing...';
+            resultDiv.innerHTML = '<span class="loading"></span> Fetching stock data and generating predictions...';
+            resultDiv.style.display = 'block';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:5001/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ticker: ticker })
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Failed to fetch stock data');
+                }
+
+                displayStockData(data);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div style="color: #ff6b6b;">
+                        <h3>Error analyzing ${ticker}</h3>
+                        <p>${error.message}</p>
+                        <p>Possible solutions:</p>
+                        <ul>
+                            <li>Check the stock symbol is correct</li>
+                            <li>Try again in a few minutes</li>
+                            <li>Some international stocks may not be supported</li>
+                        </ul>
+                    </div>
+                `;
+                console.error('Error:', error);
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Get Predictions';
+            }
+        }
+
+        function displayStockData(data) {
+            const resultDiv = document.getElementById('result');
+            console.log(data)
+            let html = `
+                <div class="stock-header">
+                    <h2>${data.ticker}</h2>
+                    <div style="font-size: 1.5rem; font-weight: bold;">
+                        $${data.current_price.toFixed(2)} ${data.currency}
+                    </div>
+                </div>
+                
+                <h3>Price History</h3>
+                <table class="price-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Closing Price</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            // Display historical data
+            const hasPredictions = data.price_data.predictions && data.price_data.predictions.length > 0;
+            const splitIndex = hasPredictions ? data.price_data.dates.length - 1 : data.price_data.dates.length;
+            
+            for (let i = 0; i < splitIndex; i++) {
+                html += `
+                    <tr>
+                        <td>${data.price_data.dates[i]}</td>
+                        <td>${data.price_data.prices[i].toFixed(2)}</td>
+                        <td>Historical</td>
+                    </tr>
+                `;
+            }
+            
+            // Display prediction if available
+            if (hasPredictions) {
+                const lastDate = data.price_data.dates[data.price_data.dates.length - 1];
+                const lastPrice = data.price_data.prices[data.price_data.prices.length - 1];
+                
+                html += `
+                    <tr class="prediction-row">
+                        <td>${lastDate}</td>
+                        <td>${lastPrice.toFixed(2)}</td>
+                        <td>Predicted</td>
+                    </tr>
+                `;
+            }
+            
+            html += `</tbody></table>`;
+            
+            // Display prediction details if available
+            if (hasPredictions) {
+                html += `
+                    <div class="prediction-card">
+                        <h3>Market Forecast</h3>
+                        <p>Our models predict:</p>
+                        
+                        <div class="prediction-methods">
+                `;
+                
+                data.price_data.predictions.forEach(pred => {
+                    html += `
+                        <div class="prediction-method">
+                            <h4>${pred.type}</h4>
+                            <p>Prediction: <strong>$${pred.price.toFixed(2)}</strong></p>
+                            <p>Confidence: <span class="confidence-${pred.confidence}">${pred.confidence}</span></p>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Add disclaimer
+            html += `
+                <div class="disclaimer">
+                    <p>Disclaimer: Predictions are based on mathematical models and historical data. 
+                    They are not guarantees of future performance. Always conduct your own research 
+                    before making investment decisions.</p>
+                    <p>Data source: ${data.source} • Last updated: ${new Date(data.timestamp).toLocaleString()}</p>
+                </div>
+            `;
+            
+            resultDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+
+        // Handle Enter key press
+        document.getElementById('tickerInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                searchTicker();
+            }
+        });
+    </script>
+</body>
+</html>
