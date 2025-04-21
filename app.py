@@ -17,7 +17,8 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=["https://sentidex.onrender.com"])
+CORS(app)
+
 
 @app.after_request
 def after_request(response):
@@ -25,7 +26,6 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
     return response
-
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -175,16 +175,8 @@ def calculate_predictions(ticker, current_price):
     finally:
         driver.quit()
 
-@app.route('/search', methods=['POST', 'OPTIONS'])
+@app.route('/search', methods=['POST'])
 def handle_search():
-    if request.method == 'OPTIONS':
-        # Preflight response
-        response = app.make_response('')
-        response.headers.add('Access-Control-Allow-Origin', 'https://sentidex.onrender.com')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-        response.headers.add('Access-Control-Allow-Methods', 'POST,OPTIONS')
-        return response
-
     data = request.get_json()
     ticker = data.get('ticker', '').upper().strip()
 
@@ -201,7 +193,7 @@ def handle_search():
             'ticker': ticker,
             'suggestion': 'Please try again later'
         }), 400
-
+    
     stock_data['price_data']['dates'] = stock_data['price_data']['dates'][::-1]
     stock_data['price_data']['prices'] = stock_data['price_data']['prices'][::-1]
 
