@@ -99,22 +99,22 @@ def get_yfinance_data(ticker):
 
 
 def calculate_predictions(ticker, current_price):
-    # Configure Chrome options
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Run in background
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.binary_location = "/usr/bin/chromium"
+    
     # Initialize the driver
     driver = webdriver.Chrome(options=chrome_options)
     
     try:
-        # Load the page
+        # Load the page with explicit wait
         url = f"https://finance.yahoo.com/quote/{ticker}"
         driver.get(url)
         
-        # Wait for page to load
-        time.sleep(2)  # Increased wait time for stability
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "[data-testid='recent-news']"))
+        )
+        
         
         # Get the page source and parse with BeautifulSoup
         soup = BeautifulSoup(driver.page_source, 'html.parser')
