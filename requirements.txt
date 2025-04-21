@@ -8,3 +8,4 @@ cachetools==5.3.1
 selenium==4.10.0
 webdriver-manager==3.8.6  # Auto-handles ChromeDriver
 pytz==2023.3  # Timezone support for datetime
+gunicorn
